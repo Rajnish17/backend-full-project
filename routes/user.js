@@ -2,6 +2,42 @@ const User = require("../models/userSchema");
 const express = require("express");
 const bcrypt = require('bcrypt');
 const router = express.Router();
+// const jwt =require("jsonwebtoken");
+// const {verifyTokenAndAdmin}=require("./authToken");
+
+
+//admin route
+
+router.post("/admin",async(req,res)=>{
+
+    const{email,password} =req.body;
+ 
+    try {
+        const user = await User.findOne({email});
+       
+    
+        if(!user){
+            return res.status(401).json({ error: "user not found" });
+        }
+          // Check the password
+          const passwordMatch = await bcrypt.compare(password, user.password);
+          if (!passwordMatch) {
+              return res.status(401).json({ error: 'Invalid  password' });
+          }
+        
+          if(user.isAdmin && passwordMatch ){
+    
+            res.status(201).json({ message: 'Login successful as admin'});
+          }else{
+            res.status(400).json({error:"you are not authorised"})
+          }
+    
+      } catch (error) {
+        console.log(error)
+      }
+
+})
+
 
 //register User
 router.post("/register", async (req, res) => {
@@ -49,7 +85,7 @@ router.post("/login", async (req, res) => {
             return res.status(401).json({ error: 'Invalid  password' });
         }
 
-        res.json({ message: 'Login successful' });
+        res.status(200).json({ message: 'Login successful' });
 
 
     } catch (err) {
@@ -69,7 +105,7 @@ router.put("/update", async (req, res) => {
 
         };
 
-        // Check the existing password
+        // Check the existing user password and compare
         const passwordMatch = await bcrypt.compare(currentPassword, user.password);
         if (!passwordMatch) {
             return res.status(401).json({ error: 'Invalid old password' });
@@ -90,7 +126,7 @@ router.put("/update", async (req, res) => {
 
 
 //show all User
-router.get("/showuser", async (req, res) => {
+router.get("/showuser",async (req, res) => {
 
     try {
         const allUser = await User.find();
